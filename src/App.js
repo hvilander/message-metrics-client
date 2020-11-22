@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 import socketIOClient from "socket.io-client";
+import Metric from "./Metric";
+import { isCANMessage, isGPSMessage } from "./util/MessageParsing";
 
 const ENDPOINT = "http://127.0.0.1:4001";
 
@@ -12,9 +14,9 @@ let newestTS = 0;
 let deltaT = 0;
 
 const inbound = (message) => {
-  if (message && message.gps_id && message.latitude  && message.longitude && message.groundspeed && message.truecourse) {
+  if (message && isGPSMessage(message)) {
     gpsMessageCount++;
-  } else if (message && message.message_id && message.dlc && message.payload) {
+  } else if (message && isCANMessage(message)) {
     canMessageCount++;
   } else {
     unidentifiedMessageCount++;
@@ -47,6 +49,7 @@ const formatRunTime = (ms) => {
 
 function App() {
   const [response, setResponse] = useState(0);
+  const [thing, setThing] = useState('0');
 
   useEffect(() => {
     const socket = socketIOClient(ENDPOINT, { transport: ['websocket'] });
@@ -56,19 +59,13 @@ function App() {
     });
   }, []);
 
-
-
-
-
   return (
     <div>
-      <p>{`Total GPS messsages - ${gpsMessageCount}`}</p>
-      <p>{`Total CAN messsages - ${canMessageCount}`}</p>
-      <p>{`Total unidentified messsages - ${unidentifiedMessageCount}`}</p>
-      <p>{`Total processed messages - ${gpsMessageCount + canMessageCount + unidentifiedMessageCount}`}</p>
-      <p>{`runtime (from oldest timestamp to newest) - ${formatRunTime(deltaT)}`}</p>
-      <p>{`oldestTS: ${oldestTS}`}</p>
-      <p>{`newestTS: ${newestTS}`}</p>
+      <Metric title="Total GPS Messages" value={gpsMessageCount}></Metric>
+      <Metric title="Total Can Messages" value={canMessageCount}></Metric>
+      <Metric title="Total Unidentified Messages" value={unidentifiedMessageCount}></Metric>
+      <Metric title="Total Messages" value={gpsMessageCount + canMessageCount + unidentifiedMessageCount}></Metric>
+      <Metric title="Time Range of Timestamps" value={formatRunTime(deltaT)}></Metric>
     </div>
   );
 }
