@@ -11,8 +11,6 @@ let oldestTS = 0;
 let newestTS = 0;
 let deltaT = 0;
 
-let limitedPackets = 0;
-
 const inbound = (message) => {
   if (message && message.gps_id && message.latitude  && message.longitude && message.groundspeed && message.truecourse) {
     gpsMessageCount++;
@@ -33,27 +31,22 @@ const inbound = (message) => {
       newestTS = timestamp;
     }
 
-
-    //oldestTS = oldestTS < timestamp ? timestamp : oldestTS;
-    //newestTS = newestTS && newestTS > timestamp ? newestTS : timestamp;
     deltaT = newestTS - oldestTS;
   }
-
-  if (limitedPackets < 0) {
-    limitedPackets++;
-    //console.log(message);
-
-
-
-    const aTS = message.ts;
-    console.log(new Date(aTS).getTime());
-  }
-
-
 }
 
+/**
+ * Takes a given duration in ms and returns a string formated to seconds.
+ * @param ms duration in ms
+ */
+const formatRunTime = (ms) => {
+  const seconds = ms / 1000;
+  return `${seconds} seconds`;
+}
+
+
 function App() {
-  const [response, setResponse] = useState("");
+  const [response, setResponse] = useState(0);
 
   useEffect(() => {
     const socket = socketIOClient(ENDPOINT, { transport: ['websocket'] });
@@ -66,12 +59,14 @@ function App() {
 
 
 
+
   return (
     <div>
       <p>{`Total GPS messsages - ${gpsMessageCount}`}</p>
       <p>{`Total CAN messsages - ${canMessageCount}`}</p>
       <p>{`Total unidentified messsages - ${unidentifiedMessageCount}`}</p>
-      <p>{`runtime (from oldest timestamp to newest) - ${deltaT}`}</p>
+      <p>{`Total processed messages - ${gpsMessageCount + canMessageCount + unidentifiedMessageCount}`}</p>
+      <p>{`runtime (from oldest timestamp to newest) - ${formatRunTime(deltaT)}`}</p>
       <p>{`oldestTS: ${oldestTS}`}</p>
       <p>{`newestTS: ${newestTS}`}</p>
     </div>
